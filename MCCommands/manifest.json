@@ -1,0 +1,10 @@
+{
+  "Name": "Minecraft-Styled Commands",
+  "Author": "OFTS_CQM",
+  "Version": "0.1.0",
+  "Description": "Don't want to memorize these weired abbreviations? Try Minecraft-Styled Commands!",
+  "UniqueID": "ofts.mscommands",
+  "EntryDll": "MCCommands.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}
