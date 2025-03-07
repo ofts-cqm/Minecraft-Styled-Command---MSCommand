@@ -13,6 +13,7 @@ namespace MCCommands
             _ = new Advancement(helper);
             _ = new Ban(helper);
             _ = new BanList(helper);
+            _ = new BossBar(helper);
         }
     }
 }

@@ -8,33 +8,57 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Network;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace MCCommands.Commands
 {
     public class BossBarData : INetObject<NetFields>
     {
+        [XmlIgnore]
         public NetFields NetFields { get; }
 
+        [XmlElement("color")]
         public NetInt color = new();
+        [XmlElement("style")]
         public NetInt style = new();
+        [XmlElement("max")]
         public NetInt max = new();
+        [XmlElement("name")]
         public NetString name = new();
+        [XmlElement("visibility")]
         public NetBool visibility = new();
+        [XmlElement("value")]
         public NetInt value = new();
+        [XmlElement("plauers")]
         public NetString players = new();
 
+        [XmlIgnore]
         public int Color { get => color.Value; set => color.Value = value; }
+        [XmlIgnore]
         public int Style { get => style.Value; set => style.Value = value; }
+        [XmlIgnore]
         public int Max { get => max.Value; set => max.Value = value; }
+        [XmlIgnore]
         public string Name { get => name.Value; set => name.Value = value; }
+        [XmlIgnore]
         public bool Visibility { get => visibility.Value; set => visibility.Value = value; }
+        [XmlIgnore]
         public int Value { get => value.Value; set => this.value.Value = value; }
+        [XmlIgnore]
         public string Players { get => players.Value; set => players.Value = value; }
 
         public BossBarData()
         {
-            NetFields = new NetFields(NetFields.GetNameForInstance(this))
+            Color = 0;
+            Style = 4;
+            Max = 100;
+            Name = "Entity";
+            Visibility = true;
+            Value = 0;
+            Players = "";
+            NetFields = new NetFields(NetFields.GetNameForInstance(this)).SetOwner(this)
                 .AddField(color, "color")
                 .AddField(style, "style")
                 .AddField(max, "max")
@@ -51,7 +75,7 @@ namespace MCCommands.Commands
     {
         public static readonly NetStringDictionary<BossBarData, NetRef<BossBarData>> BossBars = new();
         public static readonly NetStringList RegisteredIDs = new();
-        public static PerScreen<List<BossBarData>> VisibleBossBars = new();
+        public static PerScreen<List<BossBarData>> VisibleBossBars = new(() => new List<BossBarData>());
 
         public static IModHelper Helper;
         public static Texture2D BarTexture;
@@ -139,21 +163,64 @@ namespace MCCommands.Commands
             BarTexture = helper.ModContent.Load<Texture2D>("assets/bars");
         }
 
+        public struct TemperoryRecord
+        {
+            public string Name;
+            public int Value;
+            public int Max;
+            public int Color;
+            public int Style;
+            public bool Visibility;
+            public string Players;
+
+            public TemperoryRecord(BossBarData data)
+            {
+                Name = data.Name;
+                Value = data.Value;
+                Max = data.Max;
+                Color = data.Color;
+                Style = data.Style;
+                Visibility = data.Visibility;
+                Players = data.Players;
+            }
+        }
+
         public static void SaveBossBar(object? sender, SavingEventArgs e)
         {
-            Helper.Data.WriteSaveData("BossBars", BossBars);
+            Dictionary<string, TemperoryRecord> BossBars2 = new();
+            foreach (string id in RegisteredIDs)
+            {
+                BossBarData data = BossBars[id];
+                BossBars2.Add(id, new TemperoryRecord(data));
+            }
+            Helper.Data.WriteSaveData("BossBars", BossBars2);
         }
 
         public static void ReadBossBar(object? sender, SaveLoadedEventArgs e)
         {
-            BossBars.CopyFrom(Helper.Data.ReadSaveData<Dictionary<string, BossBarData>>("BossBars") ?? new());
+            BossBars.Clear();
+            foreach (KeyValuePair<string, TemperoryRecord> p in Helper.Data.ReadSaveData<Dictionary<string, TemperoryRecord>>("BossBars") ?? new())
+            {
+                BossBars.Add(p.Key, new BossBarData
+                {
+                    Name = p.Value.Name,
+                    Value = p.Value.Value,
+                    Max = p.Value.Max,
+                    Color = p.Value.Color,
+                    Style = p.Value.Style,
+                    Visibility = p.Value.Visibility,
+                    Players = p.Value.Players
+                });
+            }
             RegisteredIDs.Clear();
             foreach (string id in BossBars.Keys) RegisteredIDs.Add(id.ToString());
+            UpdateBossBars(null, null);
         }
 
-        public static void UpdateBossBars(object? sender, OneSecondUpdateTickedEventArgs _)
+        public static void UpdateBossBars(object? sender, OneSecondUpdateTickedEventArgs? _)
         {
             VisibleBossBars.Value.Clear();
+            if (!Context.IsWorldReady) return;
             foreach (BossBarData data in BossBars.Values)
             {
                 if (VisibleBossBars.Value.Count > 3) return;
@@ -163,16 +230,24 @@ namespace MCCommands.Commands
 
         public static void DrawBossBar(object? sender, RenderingHudEventArgs e)
         {
-            int position = 10;
+            int position = GetStartingPixel();
             SpriteBatch sb = e.SpriteBatch;
             for (int i = 0; i < VisibleBossBars.Value.Count; i++)
             {
                 BossBarData data = VisibleBossBars.Value[i];
-                SpriteText.drawStringHorizontallyCenteredAt(sb, data.Name, Game1.viewport.Width / 2, position + i * 50);
-                sb.Draw(BarTexture, new Rectangle((Game1.viewport.Width - 728) / 2, position + i * 50 + 30, (int)(728 * (data.Value / (float)data.Max)), 20), new Rectangle(0, data.Color * 10 + 5, (int)(182 * (data.Value / (float)data.Max)), 5), Color.White);
-                sb.Draw(BarTexture, new Rectangle((Game1.viewport.Width - 728) / 2 + (int)(728 * (data.Value / (float)data.Max)), position + i * 50 + 30, (int)(728 * (1 - data.Value / (float)data.Max)), 20), new Rectangle((int)(182 * (data.Value / (float)data.Max)), data.Color * 10, (int)(182 * (1 - data.Value / (float)data.Max)), 5), Color.White);
-                sb.Draw(BarTexture, new Rectangle((Game1.viewport.Width - 728) / 2, position + i * 50 + 20, 728, 30), new Rectangle(182, data.Style * 5, 182, 5), Color.White);
+                sb.DrawString(Game1.smallFont, data.Name, new Vector2((Game1.viewport.Width - Game1.smallFont.MeasureString(data.Name).X * 1.5f) / 2, position + i * 60), Color.White, 0, Vector2.Zero, 1.5f, SpriteEffects.None, 1);
+                //SpriteText.drawStringHorizontallyCenteredAt(sb, data.Name, Game1.viewport.Width / 2, position + i * 50);
+                sb.Draw(BarTexture, new Rectangle((Game1.viewport.Width - 728) / 2, position + i * 60 + 40, (int)(728 * (data.Value / (float)data.Max)), 20), new Rectangle(0, data.Color * 10 + 5, (int)(182 * (data.Value / (float)data.Max)), 5), Color.White);
+                sb.Draw(BarTexture, new Rectangle((Game1.viewport.Width - 728) / 2 + (int)(728 * (data.Value / (float)data.Max)), position + i * 60 + 40, (int)(728 * (1 - data.Value / (float)data.Max)), 20), new Rectangle((int)(182 * (data.Value / (float)data.Max)), data.Color * 10, (int)(182 * (1 - data.Value / (float)data.Max)), 5), Color.White);
+                sb.Draw(BarTexture, new Rectangle((Game1.viewport.Width - 728) / 2, position + i * 60 + 40, 728, 20), new Rectangle(192, data.Style * 5, 182, 5), Color.White);
             }
+        }
+
+        public static int GetStartingPixel()
+        {
+            Point standingPixel = Game1.player.StandingPixel;
+            Vector2 vector = Game1.GlobalToLocal(globalPosition: new Vector2(standingPixel.X, standingPixel.Y), viewport: Game1.viewport);
+            return Game1.options.pinToolbarToggle || (vector.Y <= Game1.viewport.Height / 2 + 64) ? 10 : 110;
         }
 
         public bool Subcommand_Add(List<object> matchedToken, CommandContext context, out string? message)
@@ -311,25 +386,25 @@ namespace MCCommands.Commands
                             int newColor;
                             switch (color)
                             {
-                                case "blue":
+                                case "pink":
                                     newColor = 0;
                                     break;
-                                case "green":
+                                case "blue":
                                     newColor = 1;
                                     break;
-                                case "pink":
+                                case "red":
                                     newColor = 2;
                                     break;
-                                case "purple":
+                                case "green":
                                     newColor = 3;
                                     break;
-                                case "red":
+                                case "yellow":
                                     newColor = 4;
                                     break;
-                                case "white":
+                                case "purple":
                                     newColor = 5;
                                     break;
-                                case "yellow":
+                                case "white":
                                     newColor = 6;
                                     break;
                                 default:
@@ -352,19 +427,15 @@ namespace MCCommands.Commands
                     }
                 case "max":
                     {
-                        if (int.TryParse(matchedToken[3] as string, out int max))
+                        int max = (int)matchedToken[3];
+                        if (bar.Max == max)
                         {
-                            if (bar.Max == max)
-                            {
-                                message = $"Custom bossbar already has maximum value {max}"; 
-                                return false;
-                            }
-                            bar.Max = max;
-                            message = $"Custom bossbar [{bar.Name}] has a maximum of {max}";
-                            return true;
+                            message = $"Custom bossbar already has maximum value {max}";
+                            return false;
                         }
-                        message = "Invalid Value";
-                        return false;
+                        bar.Max = max;
+                        message = $"Custom bossbar [{bar.Name}] has a maximum of {max}";
+                        return true;
                     }
                 case "name":
                     {
@@ -397,7 +468,8 @@ namespace MCCommands.Commands
                                 }
                             }
                         }
-                        IEnumerable<Farmer>? allPlayers = EntityMatchToken.GetPlayers(bar.Players, context.Dim, context.Player);
+                        bar.Players = players;
+                        IEnumerable<Farmer>? allPlayers = EntityMatchToken.GetPlayers(players, context.Dim, context.Player);
 
                         if (allPlayers is null)
                         {
@@ -410,6 +482,7 @@ namespace MCCommands.Commands
                         foreach (Farmer player in allPlayers) sb.Append(player.displayName).Append(", ");
                         message = sb.ToString();
                         message = message.Remove(message.Length - 2);
+                        UpdateBossBars(null, null);
                         return true;
                     }
                 case "style":
@@ -455,35 +528,28 @@ namespace MCCommands.Commands
 
                 case "value":
                     {
-                        if (int.TryParse(matchedToken[3] as string, out int max))
+                        int max = (int)matchedToken[3];
+                        if (bar.Value == max)
                         {
-                            if (bar.Value == max)
-                            {
-                                message = $"Custom bossbar already has value {max}";
-                                return false;
-                            }
-                            bar.Value = max;
-                            message = $"Custom bossbar [{bar.Name}] has a value of {max}";
-                            return true;
+                            message = $"Custom bossbar already has value {max}";
+                            return false;
                         }
-                        message = "Invalid Value";
-                        return false;
+                        bar.Value = max;
+                        message = $"Custom bossbar [{bar.Name}] has a value of {max}";
+                        return true;
                     }
                 case "visible":
                     {
-                        if (bool.TryParse(matchedToken[3] as string, out bool visible))
+
+                        bool visible = (bool)matchedToken[3];
+                        if (bar.Visibility == visible)
                         {
-                            if (bar.Visibility == visible)
-                            {
-                                message = $"Nothing Changed. Custom bossbar [{bar.Name}] is already {(visible ? "visible" : "hidden")}";
-                                return false;
-                            }
-                            bar.Visibility = visible;
-                            message = $"Custom bossbar [{bar.Name}] is now {(visible ? "visible" : "hidden")}";
-                            return true;
+                            message = $"Nothing Changed. Custom bossbar [{bar.Name}] is already {(visible ? "visible" : "hidden")}";
+                            return false;
                         }
-                        message = "Invalid Value";
-                        return false;
+                        bar.Visibility = visible;
+                        message = $"Custom bossbar [{bar.Name}] is now {(visible ? "visible" : "hidden")}";
+                        return true;
                     }
                 default:
                     message = "Invalid Subcommand";
