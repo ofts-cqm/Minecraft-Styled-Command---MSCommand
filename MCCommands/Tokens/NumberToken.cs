@@ -5,7 +5,7 @@
         public int Max;
         public int Min;
         public bool AllowInf;
-        public IEnumerable<string>? AllValues;
+        public Func<IEnumerable<string>?>? AllValues;
 
         public NumberToken(string tokenName, int max = 2147483647, int min = 0, bool allowInf = false) : base(tokenName, "Expected Integer")
         {
@@ -15,7 +15,7 @@
             StrictValue = false;
         }
 
-        public NumberToken Allow(IEnumerable<string> values)
+        public NumberToken Allow(Func<IEnumerable<string>?> values)
         {
             AllValues = values;
             return this;
@@ -23,7 +23,7 @@
 
         public override IEnumerable<string>? GetAllValues()
         {
-            return AllValues == null ? (AllowInf ? new string[] { "Infinity" } : null) : AllValues;
+            return AllValues == null ? (AllowInf ? new string[] { "Infinity" } : null) : AllValues();
         }
 
         public override bool IsAllowedValue(string value)

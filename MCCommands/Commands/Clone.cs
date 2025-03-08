@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.TerrainFeatures;
-using System.Collections.Generic;
 using xTile.Dimensions;
 using Object = StardewValley.Object;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
@@ -30,20 +29,21 @@ namespace MCCommands.Commands
         public static readonly StringToken CloneModeToken = new StringToken(() => new string[] { "force", "move", "normal" }, "cloneMod", "Incorrect Argument") { IsOptional = true };
         public static readonly StringToken CloneModeToken2 = new StringToken(() => new string[] { "force", "move", "normal" }, "cloneMod", "Incorrect Argument") { Next = new StringToken(StringToken.Item_Target, "block", "Block Not Found") };
 
-        public Clone(IModHelper helper) : base(helper, "clone", "clone <begin: x y> <end: x y> <destination: x y>", 
-            new NumberToken("x").Allow(new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() })
-            .NextToken(new NumberToken("y").Allow(new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
-            .NextToken(new NumberToken("x").Allow(new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
-            .NextToken(new NumberToken("y").Allow(new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
-            .NextToken(new NumberToken("x").Allow(new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
-            .NextToken(new NumberToken("y").Allow(new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
+        public Clone(IModHelper helper) : base(helper, "clone", "clone <begin: x y> <end: x y> <destination: x y>", new NumberToken("x"))
+        {
+            ((NumberToken)FirstToken).Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() })
+            .NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
+            .NextToken(new NumberToken("x").Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
+            .NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
+            .NextToken(new NumberToken("x").Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
+            .NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
             .NextToken(new SubCommandToken(new Dictionary<string, IToken?>()
             {
                 { "filter",  CloneModeToken2 },
                 { "replace", CloneModeToken },
                 { "mask",    CloneModeToken }
-            })))
-        {
+            })
+            { IsOptional = true});
         }
         
         public static string[] GetNameFromObject(Object? obj) => obj is null ? Array.Empty<string>() : new string[] { obj.Name, obj.DisplayName, obj.QualifiedItemId, obj.ItemId };
@@ -83,7 +83,7 @@ namespace MCCommands.Commands
             CloneMode cloneMode = CloneMode.Normal;
             string target = "";
 
-            if (matchedToken.Count >= 6) switch (matchedToken[6] as string)
+            if (matchedToken.Count > 6) switch (matchedToken[6] as string)
             {
                 case "filter":
                     maskMode = MaskMode.Filtered;
@@ -99,7 +99,7 @@ namespace MCCommands.Commands
                     return false;
             }
 
-            if (matchedToken.Count >= 7) switch (matchedToken[7] as string)
+            if (matchedToken.Count > 7) switch (matchedToken[7] as string)
             {
                 case "force":
                     cloneMode = CloneMode.Force;
@@ -135,8 +135,8 @@ namespace MCCommands.Commands
                 {
                     Vector2 sourceVec = new(source.X + j, source.Y + i);
                     Vector2 destVec = new(dest.X + j, dest.Y + i);
-                    if (DoClone(() => context.Dim.Objects[sourceVec], (a, dest) => objectChangeRequest.TryAdd(dest ? destVec : sourceVec, a), GetNameFromObject, maskMode, cloneMode, target)) blocksMoved++;
-                    if (DoClone(() => context.Dim.terrainFeatures[sourceVec], (a, dest) => terrianChangeRequest.TryAdd(dest ? destVec : sourceVec, a), GetNameFromTerrainFeature, maskMode, cloneMode, target)) blocksMoved++;
+                    if (DoClone(() => context.Dim.Objects.TryGetValue(sourceVec, out Object a) ? a : null, (a, dest) => objectChangeRequest.TryAdd(dest ? destVec : sourceVec, a), GetNameFromObject, maskMode, cloneMode, target)) blocksMoved++;
+                    if (DoClone(() => context.Dim.terrainFeatures.TryGetValue(sourceVec, out TerrainFeature a) ? a : null, (a, dest) => terrianChangeRequest.TryAdd(dest ? destVec : sourceVec, a), GetNameFromTerrainFeature, maskMode, cloneMode, target)) blocksMoved++;
                 }
             }
 

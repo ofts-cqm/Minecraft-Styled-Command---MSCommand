@@ -28,19 +28,27 @@ namespace MCCommands.Commands
             );
         }
 
+        public string getParsedCommand(List<string> parsed, List<string> original)
+        {
+            StringBuilder sb = new(CommandName);
+            for (int i = 0; i < original.Count - parsed.Count; i++) sb.Append(original[i]).Append(' ');
+            return sb.ToString();
+        }
+
         public void MatchAndExecute(List<string> args, CommandContext context)
         {
             if (!Context.IsWorldReady) return;
             List<object> matchedToken = new();
             string previousStr = args.Count > 0 ? args[0] : CommandName;
             IToken? token = FirstToken;
+            List<string> oldArgs = new(args);
             while (token != null) 
             {
                 if (token.MatchToken(args, out object? val, out string? error) && val != null) matchedToken.Add(val);
                 else if (error != null)
                 {
                     context.LogError(error);
-                    context.LogError(args.Aggregate((a, b) => a + ' ' + b) + " <-- [Here]");
+                    context.LogError(oldArgs.Aggregate((a, b) => a + ' ' + b) + " <-- [Here]");
                     return;
                 }
 
