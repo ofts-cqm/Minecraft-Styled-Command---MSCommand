@@ -1,11 +1,11 @@
 ﻿namespace MCCommands.Tokens
 {
-    internal class NumberToken : IToken
+    internal class NumberToken : LinearToken
     {
         public int Max;
         public int Min;
         public bool AllowInf;
-        public IToken? Next;
+        public IEnumerable<string>? AllValues;
 
         public NumberToken(string tokenName, int max = 2147483647, int min = 0, bool allowInf = false) : base(tokenName, "Expected Integer")
         {
@@ -15,14 +15,15 @@
             StrictValue = false;
         }
 
-        public override IEnumerable<string>? GetAllValues()
+        public NumberToken Allow(IEnumerable<string> values)
         {
-            return AllowInf ? new string[] { "Infinity" } : null;
+            AllValues = values;
+            return this;
         }
 
-        public override IToken? GetNextToken(object? readValue)
+        public override IEnumerable<string>? GetAllValues()
         {
-            return readValue == null ? null : Next;
+            return AllValues == null ? (AllowInf ? new string[] { "Infinity" } : null) : AllValues;
         }
 
         public override bool IsAllowedValue(string value)

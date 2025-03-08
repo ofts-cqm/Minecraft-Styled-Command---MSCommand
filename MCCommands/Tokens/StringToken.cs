@@ -4,10 +4,9 @@ using StardewValley.ItemTypeDefinitions;
 
 namespace MCCommands.Tokens
 {
-    internal class StringToken : IToken
+    internal class StringToken : LinearToken
     {
         public Func<string[]?> AllValues;
-        public IToken? Next;
 
         public StringToken(Func<string[]?> allValues, string tokenName, string errorMessage) : base(tokenName, errorMessage)
         {
@@ -31,11 +30,6 @@ namespace MCCommands.Tokens
                 args.RemoveAt(0);
             }
             return true;
-        }
-
-        public override IToken? GetNextToken(object? readValue)
-        {
-            return readValue == null ? null : Next;
         }
 
         [Obsolete]

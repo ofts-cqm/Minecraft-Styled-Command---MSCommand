@@ -3,10 +3,8 @@ using StardewValley.Extensions;
 
 namespace MCCommands.Tokens
 {
-    internal class EntityMatchToken : IToken
+    internal class EntityMatchToken : LinearToken
     {
-        public IToken? Next { get; set; }
-
         public EntityMatchToken(string tokenName, string errorMessage = "Entity Not Found") : base(tokenName, errorMessage)
         {
         }
@@ -31,8 +29,6 @@ namespace MCCommands.Tokens
             }
             return true;
         }
-
-        public override IToken? GetNextToken(object? readValue) => Next;
 
         public override bool IsAllowedValue(string value)
         {
@@ -101,12 +97,6 @@ namespace MCCommands.Tokens
             foreach (Character c in temp) if (c is Farmer f) farmers.Add(f);
             if (!farmers.Any()) return null;
             return farmers;
-        }
-
-        public IToken next(IToken next)
-        {
-            Next = next;
-            return next;
         }
     }
 }

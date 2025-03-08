@@ -1,11 +1,10 @@
 ﻿namespace MCCommands.Tokens
 {
-    internal class BoolToken : IToken
+    internal class BoolToken : LinearToken
     {
-        public IToken? Next;
-
         public BoolToken(string tokenName, string errorMessage = "Unknown Token") : base(tokenName, errorMessage)
         {
+            ShowAll = true;
         }
 
         public override bool MatchToken(List<string> args, out object? readValue, out string? error)
@@ -23,8 +22,6 @@
         }
 
         public override IEnumerable<string>? GetAllValues() => new string[] { "true", "false" };
-
-        public override IToken? GetNextToken(object? readValue) => Next;
 
         public override bool IsAllowedValue(string value) => value == "true" || value == "false";
     }
