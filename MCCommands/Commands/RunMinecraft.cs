@@ -14,6 +14,12 @@ namespace MCCommands.Commands
 
         public override bool Execute(List<object> matchedToken, CommandContext context, out string? message)
         {
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                message = "This command is only available on Windows";
+                return false;
+            }
+
             if (!Helper.ModContent.DoesAssetExist<object>(".minecraft\\versions\\1.20.6\\1.20.6.jar"))
             {
                 message = "Minecraft is missing, downloading... Please wait a few seconds and run the command again";
