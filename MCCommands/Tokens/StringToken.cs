@@ -117,14 +117,24 @@ namespace MCCommands.Tokens
             return null;
         }
 
-        public static string[] Item_Target()
+        private static string[] ParsedItemTarget = Array.Empty<string>();
+
+        public static void Internal_Item_Target(object? sender, EventArgs _)
         {
             List<string> ids = new();
             foreach (IItemDataDefinition def in ItemRegistry.ItemTypes)
             {
                 ids.AddRange(def.GetAllIds());
+                foreach (string id in def.GetAllIds())
+                {
+                    ParsedItemData item = def.GetData(id);
+                    ids.Add(item.InternalName);
+                    ids.Add(item.DisplayName);
+                }
             }
-            return ids.ToArray();
+            ParsedItemTarget = ids.ToArray();
         }
+
+        public static string[] Item_Target() => ParsedItemTarget;
     }
 }

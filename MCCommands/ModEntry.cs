@@ -1,7 +1,6 @@
 ﻿using MCCommands.Commands;
+using MCCommands.Tokens;
 using StardewModdingAPI;
-using StardewValley;
-using StardewValley.TerrainFeatures;
 
 namespace MCCommands
 {
@@ -16,7 +15,8 @@ namespace MCCommands
             _ = new BanList(helper);
             _ = new BossBar(helper);
             _ = new Clone(helper);
-            Monitor.Log(typeof(TerrainFeature).Name, LogLevel.Info);
+            helper.Events.GameLoop.SaveLoaded += StringToken.Internal_Item_Target;
+            helper.Events.GameLoop.SaveCreated += StringToken.Internal_Item_Target;
         }
     }
 }

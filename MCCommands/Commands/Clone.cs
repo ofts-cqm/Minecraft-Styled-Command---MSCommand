@@ -29,17 +29,18 @@ namespace MCCommands.Commands
         public static readonly StringToken CloneModeToken = new StringToken(() => new string[] { "force", "move", "normal" }, "cloneMod", "Incorrect Argument") { IsOptional = true };
         public static readonly StringToken CloneModeToken2 = new StringToken(() => new string[] { "force", "move", "normal" }, "cloneMod", "Incorrect Argument") { Next = new StringToken(StringToken.Item_Target, "block", "Block Not Found") };
 
-        public Clone(IModHelper helper) : base(helper, "clone", "clone <begin: x y> <end: x y> <destination: x y>", new NumberToken("x"))
+        public Clone(IModHelper helper) : base(helper, "clone", "clone <begin: x y> <end: x y> <destination: x y>", new CoordinateToken("begin", false))
         {
-            ((NumberToken)FirstToken).Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() })
-            .NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
-            .NextToken(new NumberToken("x").Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
-            .NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
-            .NextToken(new NumberToken("x").Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
-            .NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
+            ((CoordinateToken)FirstToken).NextToken(new CoordinateToken("end", false)).NextToken(new CoordinateToken("destination", false))
+            //((NumberToken)FirstToken).Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() })
+            //.NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
+            //.NextToken(new NumberToken("x").Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
+            //.NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
+            //.NextToken(new NumberToken("x").Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() }))
+            //.NextToken(new NumberToken("y").Allow(() => new string[] { Game1.player.StandingPixel.Y.ToString(), (Game1.getMouseY() + Game1.viewport.Y).ToString() }))
             .NextToken(new SubCommandToken(new Dictionary<string, IToken?>()
             {
-                { "filter",  CloneModeToken2 },
+                { "filtered",  CloneModeToken2 },
                 { "replace", CloneModeToken },
                 { "mask",    CloneModeToken }
             })
@@ -63,7 +64,7 @@ namespace MCCommands.Commands
 
         public override bool Execute(List<object> matchedToken, CommandContext context, out string? message)
         {
-            Rectangle source = new(Math.Min((int)matchedToken[0], (int)matchedToken[2]), Math.Min((int)matchedToken[1], (int)matchedToken[3]), Math.Abs((int)matchedToken[0] - (int)matchedToken[2]), Math.Abs((int)matchedToken[1] - (int)matchedToken[3]));
+            Rectangle source = new(Math.Min((int)matchedToken[0], (int)matchedToken[2]), Math.Min((int)matchedToken[1], (int)matchedToken[3]), Math.Abs((int)matchedToken[0] - (int)matchedToken[2]) + 1, Math.Abs((int)matchedToken[1] - (int)matchedToken[3]) + 1);
             Rectangle dest = new((int)matchedToken[4], (int)matchedToken[5], source.Width, source.Height);
 
             Size mapSize = context.Dim.Map.Layers[0].LayerSize;
@@ -85,7 +86,7 @@ namespace MCCommands.Commands
 
             if (matchedToken.Count > 6) switch (matchedToken[6] as string)
             {
-                case "filter":
+                case "filtered":
                     maskMode = MaskMode.Filtered;
                     break;
                 case "replace":
@@ -148,13 +149,27 @@ namespace MCCommands.Commands
                     Object obj = (Object)pair.Value.getOne();
                     obj.CopyFieldsFrom(pair.Value);
                     context.Dim.Objects[pair.Key] = obj;
+                    obj.TileLocation = pair.Key;
                 }
             }
 
             foreach (KeyValuePair<Vector2, TerrainFeature?> pair in terrianChangeRequest)
             {
                 if (pair.Value is null) context.Dim.terrainFeatures.Remove(pair.Key);
-                else context.Dim.terrainFeatures[pair.Key] = pair.Value.DeepClone();
+                else
+                {
+                    //TerrainFeature obj = pair.Value.ShallowClone();
+                    TerrainFeature obj = (TerrainFeature)Activator.CreateInstance(pair.Value.GetType());
+                    //BinaryWriter bw = new(new MemoryStream());
+                    //pair.Value.NetFields.Write(bw);
+                    //obj.NetFields.Read(new BinaryReader(bw.BaseStream), default);//pair.Value.NetFields.Root.Clock.netVersion);
+                    //context.Dim.terrainFeatures[pair.Key] = cloneMode == CloneMode.Move ? pair.Value : pair.Value.DeepClone();
+                    obj.NetFields.CopyFrom(pair.Value.NetFields);
+                    obj.Tile = pair.Key;
+                    if (obj is HoeDirt d) d.updateNeighbors();
+                    context.Dim.terrainFeatures[pair.Key] = obj;
+                    //pair.Value.Tile = pair.Key;
+                }
             }
 
             if (blocksMoved == 0)

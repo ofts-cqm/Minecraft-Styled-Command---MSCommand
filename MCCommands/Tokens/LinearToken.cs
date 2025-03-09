@@ -8,7 +8,7 @@
         {
         }
 
-        public LinearToken NextToken(IToken next)
+        public virtual LinearToken NextToken(IToken next)
         {
             Next = next;
             return Next as LinearToken;

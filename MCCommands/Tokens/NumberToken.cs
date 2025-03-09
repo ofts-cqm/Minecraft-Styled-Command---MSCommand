@@ -28,7 +28,7 @@
 
         public override bool IsAllowedValue(string value)
         {
-            return int.TryParse(value, out int i) && i > Min && i < Max;
+            return int.TryParse(value, out int i) && i >= Min && i < Max;
         }
 
         public override bool MatchToken(List<string> args, out object? readValue, out string? error)
@@ -50,7 +50,7 @@
             
             if (num < Min)
             {
-                error = $"Integer must not be more than {Max}, found {num}";
+                error = $"Integer must not be less than {Max}, found {num}";
                 return false;
             }
 

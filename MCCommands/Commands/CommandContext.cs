@@ -5,6 +5,8 @@ namespace MCCommands.Commands
 {
     internal class CommandContext
     {
+        public static CommandContext? CurrentCommandContext = null;
+
         private readonly Action<string, bool> Printer;
 
         public readonly Farmer Player;

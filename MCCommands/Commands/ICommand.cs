@@ -38,6 +38,7 @@ namespace MCCommands.Commands
         public void MatchAndExecute(List<string> args, CommandContext context)
         {
             if (!Context.IsWorldReady) return;
+            CommandContext.CurrentCommandContext = context;
             List<object> matchedToken = new();
             string previousStr = args.Count > 0 ? args[0] : CommandName;
             IToken? token = FirstToken;
@@ -48,7 +49,7 @@ namespace MCCommands.Commands
                 else if (error != null)
                 {
                     context.LogError(error);
-                    context.LogError(oldArgs.Aggregate((a, b) => a + ' ' + b) + " <-- [Here]");
+                    context.LogError(getParsedCommand(oldArgs, args) + " <-- [Here]");
                     return;
                 }
 
@@ -60,6 +61,7 @@ namespace MCCommands.Commands
                 if (message != null) context.LogInfo(message);
             }
             else if (message != null) context.LogError(message);
+            CommandContext.CurrentCommandContext = null;
         }
 
         public abstract bool Execute(List<object> matchedToken, CommandContext context, out string? message);
