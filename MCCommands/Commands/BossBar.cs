@@ -80,7 +80,7 @@ namespace MCCommands.Commands
         public static IModHelper Helper;
         public static Texture2D BarTexture;
 
-        public BossBar(IModHelper helper) : base(helper, "bossbar", "bossbar <add|get|list|remove|set>", new SubCommandToken(new()
+        public BossBar(IModHelper helper) : base(helper, "bossbar", "bossbar <add|get|list|remove|set>", 2, new SubCommandToken(new()
         {
             {
                 "add", 

@@ -8,7 +8,7 @@ namespace MCCommands.Commands
 {
     internal class Clear : ICommand
     {
-        public Clear(IModHelper helper) : base(helper, "clear", "clear [<targets>] [<item>] [<maxCount>]", 
+        public Clear(IModHelper helper) : base(helper, "clear", "clear [<targets>] [<item>] [<maxCount>]", 2,
             new StringToken(StringToken.Player_Target, "target", "Player not found") 
             {
                 IsOptional = true,

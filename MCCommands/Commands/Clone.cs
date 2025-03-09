@@ -29,7 +29,7 @@ namespace MCCommands.Commands
         public static readonly StringToken CloneModeToken = new StringToken(() => new string[] { "force", "move", "normal" }, "cloneMod", "Incorrect Argument") { IsOptional = true };
         public static readonly StringToken CloneModeToken2 = new StringToken(() => new string[] { "force", "move", "normal" }, "cloneMod", "Incorrect Argument") { Next = new StringToken(StringToken.Item_Target, "block", "Block Not Found") };
 
-        public Clone(IModHelper helper) : base(helper, "clone", "clone <begin: x y> <end: x y> <destination: x y>", new CoordinateToken("begin", false))
+        public Clone(IModHelper helper) : base(helper, "clone", "clone <begin: x y> <end: x y> <destination: x y>", 2, new CoordinateToken("begin", false))
         {
             ((CoordinateToken)FirstToken).NextToken(new CoordinateToken("end", false)).NextToken(new CoordinateToken("destination", false))
             //((NumberToken)FirstToken).Allow(() => new string[] { Game1.player.StandingPixel.X.ToString(), (Game1.getMouseX() + Game1.viewport.X).ToString() })

@@ -6,7 +6,7 @@ namespace MCCommands.Commands
 {
     internal class BanList : ICommand
     {
-        public BanList(IModHelper helper) : base(helper, "banlist", "banlist", null)
+        public BanList(IModHelper helper) : base(helper, "banlist", "banlist", 3, null)
         {
         }
 

@@ -12,7 +12,7 @@ namespace MCCommands.Commands
         private static readonly StringToken AdvToken = new(() => AdvancementData.Keys.ToArray(), "advancement", "Advancement Not Found");
 
         public Advancement(IModHelper helper) : base(
-            helper, "advancement", "advancement (grant|revoke) <targets> (everything|only)",
+            helper, "advancement", "advancement (grant|revoke) <targets> (everything|only)", 2,
             new StringToken(() => new string[] {"grant", "revoke"}, "(grant|revoke)", "Incorrect Argument for Command")
             {
                 ShowAll = true,

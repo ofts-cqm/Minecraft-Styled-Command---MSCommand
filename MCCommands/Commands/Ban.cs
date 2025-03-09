@@ -6,7 +6,7 @@ namespace MCCommands.Commands
 {
     internal class Ban : ICommand
     {
-        public Ban(IModHelper helper) : base(helper, "ban", "ban <targets> [<reason>]", new StringToken(StringToken.Player_Target, "target", "Player not found")
+        public Ban(IModHelper helper) : base(helper, "ban", "ban <targets> [<reason>]", 3, new StringToken(StringToken.Player_Target, "target", "Player not found")
         {
             Next = new StringToken(() => null, "reason", "Invalid Reason")
             {

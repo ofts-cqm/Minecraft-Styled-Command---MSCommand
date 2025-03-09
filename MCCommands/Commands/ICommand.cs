@@ -8,14 +8,15 @@ namespace MCCommands.Commands
     internal abstract class ICommand
     {
         public IToken? FirstToken;
-        public int OPLevelRequired = 2;
+        public int OPLevelRequired;
         public string CommandName;
         public static IMonitor Monitor;
 
-        public ICommand(IModHelper helper, string name, string doct, IToken? tokens)
+        public ICommand(IModHelper helper, string name, string doct, int OPLevelRequired, IToken? tokens)
         {
             FirstToken = tokens;
             CommandName = name;
+            this.OPLevelRequired = OPLevelRequired;
             helper.ConsoleCommands.Add(
                 name, doct, 
                 (a, b) => MatchAndExecute(
@@ -38,6 +39,11 @@ namespace MCCommands.Commands
         public void MatchAndExecute(List<string> args, CommandContext context)
         {
             if (!Context.IsWorldReady) return;
+            if (!ModEntry.OPs.TryGetValue(context.Player.UniqueMultiplayerID, out int opLevel) || opLevel < OPLevelRequired)
+            {
+                context.LogError("You do not have permission to use this command");
+                return;
+            }
             CommandContext.CurrentCommandContext = context;
             List<object> matchedToken = new();
             string previousStr = args.Count > 0 ? args[0] : CommandName;
