@@ -27,7 +27,7 @@ namespace MCCommands
             _ = new Clone(helper);
             _ = new OP(helper);
             _ = new Deop(helper);
-
+            _ = new RunMinecraft(helper);
 
             helper.Events.GameLoop.SaveLoaded += StringToken.Internal_Item_Target;
             helper.Events.GameLoop.SaveCreated += StringToken.Internal_Item_Target;
@@ -41,6 +41,7 @@ namespace MCCommands
             {
                 serverProperty = property;
             }
+            Monitor.Log(helper.DirectoryPath, LogLevel.Info);
         }
     }
 }

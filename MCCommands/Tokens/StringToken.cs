@@ -1,5 +1,6 @@
 ﻿using StardewValley;
 using StardewValley.Extensions;
+using StardewValley.GameData.Buffs;
 using StardewValley.ItemTypeDefinitions;
 
 namespace MCCommands.Tokens
@@ -136,5 +137,16 @@ namespace MCCommands.Tokens
         }
 
         public static string[] Item_Target() => ParsedItemTarget;
+
+        private static string[] ParsedBuffTarget = Array.Empty<string>();
+
+        public static void Internal_Buff_Target(object? sender, EventArgs _)
+        {
+            Dictionary<string, BuffData> dict = DataLoader.Buffs(Game1.content);
+            List<string> temp = new(dict.Keys);
+            foreach (BuffData data in dict.Values) temp.Add(data.DisplayName);
+        }
+
+        public static string[] Buff_Target() => ParsedBuffTarget;
     }
 }

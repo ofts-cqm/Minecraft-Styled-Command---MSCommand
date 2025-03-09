@@ -39,7 +39,7 @@ namespace MCCommands.Commands
         public void MatchAndExecute(List<string> args, CommandContext context)
         {
             if (!Context.IsWorldReady) return;
-            if (!ModEntry.OPs.TryGetValue(context.Player.UniqueMultiplayerID, out int opLevel) || opLevel < OPLevelRequired)
+            if ((ModEntry.OPs.TryGetValue(context.Player.UniqueMultiplayerID, out int opLevel) ? opLevel : 0) < OPLevelRequired)
             {
                 context.LogError("You do not have permission to use this command");
                 return;

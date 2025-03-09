@@ -5,7 +5,7 @@ namespace MCCommands.Tokens
 {
     internal class EntityMatchToken : LinearToken
     {
-        public EntityMatchToken(string tokenName, string errorMessage = "Entity Not Found") : base(tokenName, errorMessage)
+        public EntityMatchToken(string tokenName = "target", string errorMessage = "Entity Not Found") : base(tokenName, errorMessage)
         {
         }
 
