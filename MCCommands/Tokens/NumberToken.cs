@@ -23,7 +23,7 @@
 
         public override IEnumerable<string>? GetAllValues()
         {
-            return AllValues == null ? (AllowInf ? new string[] { "Infinity" } : null) : AllValues();
+            return AllValues == null ? (AllowInf ? new string[] { "infinity" } : null) : AllValues();
         }
 
         public override bool IsAllowedValue(string value)
@@ -35,6 +35,12 @@
         {
             if (!base.MatchToken(args, out readValue, out error)) return false;
             if (args.Count == 0) return true;
+
+            if (args[0] == "infinity")
+            {
+                readValue = int.MaxValue;
+                return true;
+            }
             
             if (!int.TryParse(args[0], out int num))
             {
