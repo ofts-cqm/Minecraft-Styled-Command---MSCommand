@@ -22,7 +22,7 @@ namespace MCCommands.Tokens
             else return new string[] { "~", (Game1.getMouseY() + Game1.viewport.Y).ToString() };
         }
 
-        public override bool IsAllowedValue(string value) => int.TryParse(value, out int i) && i >= 0;
+        public override bool IsAllowedValue(string value) => value == "~" || int.TryParse(value, out int i) && i >= 0;
 
         public override LinearToken NextToken(IToken next)
         {

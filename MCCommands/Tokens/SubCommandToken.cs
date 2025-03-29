@@ -2,7 +2,7 @@
 {
     internal class SubCommandToken : IToken
     {
-        private readonly Dictionary<string, IToken?> Values;
+        public readonly Dictionary<string, IToken?> Values;
 
         public SubCommandToken(Dictionary<string, IToken?> values) : base("", "Incorrect Argument for Command")
         {

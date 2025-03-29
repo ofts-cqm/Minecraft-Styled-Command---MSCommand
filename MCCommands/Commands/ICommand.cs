@@ -11,6 +11,7 @@ namespace MCCommands.Commands
         public int OPLevelRequired;
         public string CommandName;
         public static IMonitor Monitor;
+        public static Dictionary<string, ICommand> RegisteredCommands = new();
 
         public ICommand(IModHelper helper, string name, string doct, int OPLevelRequired, IToken? tokens)
         {
@@ -27,6 +28,7 @@ namespace MCCommands.Commands
                     )
                 )
             );
+            RegisteredCommands.Add(name, this);
         }
 
         public string getParsedCommand(List<string> parsed, List<string> original)

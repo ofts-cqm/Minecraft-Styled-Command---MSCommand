@@ -4,6 +4,7 @@ using StardewValley.Enchantments;
 using StardewValley.Extensions;
 using StardewValley.GameData.Buffs;
 using StardewValley.ItemTypeDefinitions;
+using StardewValley.Monsters;
 using System.Reflection;
 
 namespace MCCommands.Tokens
@@ -153,17 +154,41 @@ namespace MCCommands.Tokens
         public static string[] Buff_Target() => ParsedBuffTarget;
 
         private static Dictionary<string, Type> ParsedEnchantmentTarget = new();
+        private static Dictionary<string, Type> ParsedCharacterTarget = new();
 
         public static void Internal_Enchantment_Target(object? sender, EventArgs _)
         {
-            foreach(Type t in Assembly.LoadFrom(Path.Combine(Constants.GamePath, "Stardew Valley.dll")).GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEnchantment))))
+            foreach(Type t in Assembly.LoadFrom(Path.Combine(Constants.GamePath, "Stardew Valley.dll")).GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEnchantment)) || t.IsSubclassOf(typeof(Monster))))
             {
-                ParsedEnchantmentTarget.Add(t.Name, t);
+                if (t.IsSubclassOf(typeof(BaseEnchantment))) ParsedEnchantmentTarget.Add(t.Name, t);
+                else ParsedCharacterTarget.Add(t.Name, t);
             }
         }
 
         public static string[] Enchantment_Target() => ParsedEnchantmentTarget.Keys.ToArray();
+        public static string[] Character_Target() => ParsedCharacterTarget.Keys.ToArray();
 
         public static BaseEnchantment? GetEnchantment(string name) => ParsedEnchantmentTarget.TryGetValue(name, out Type? t) ? t.GetConstructor(Array.Empty<Type>())?.Invoke(null) as BaseEnchantment ?? null : null;
+
+        public static List<string> Swiss = new();
+
+        public static string[] Swiss_Target()
+        {
+            if (Swiss.Any()) return Swiss.ToArray();
+            string[] options = new string[] { "x", "y", "z", "" };
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int k = 0; k < 4; k++)
+                    {
+                        Swiss.Add(options[i] + options[j] + options[k]);
+                    }
+                }
+            }
+            return Swiss.ToArray();
+        }
+
+        public static string[] Dimention_Target() => ModEntry.ModHelper.Multiplayer.GetActiveLocations().Select(l => l.Name).ToArray();
     }
 }

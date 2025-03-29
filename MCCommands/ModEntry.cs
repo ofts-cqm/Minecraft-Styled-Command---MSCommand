@@ -15,10 +15,13 @@ namespace MCCommands
     {
         public static ServerProperty serverProperty = new();
         public static readonly NetLongDictionary<int, NetInt> OPs = new();
+        public static IModHelper ModHelper { get; private set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
             ICommand.Monitor = Monitor;
+            ModHelper = helper;
+
             _ = new Clear(helper);
             _ = new Advancement(helper);
             _ = new Ban(helper);
