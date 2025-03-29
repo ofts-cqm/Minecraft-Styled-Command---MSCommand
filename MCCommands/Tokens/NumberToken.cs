@@ -36,7 +36,7 @@
             if (!base.MatchToken(args, out readValue, out error)) return false;
             if (args.Count == 0) return true;
 
-            if (args[0] == "infinity")
+            if (args[0] == "infinite")
             {
                 readValue = int.MaxValue;
                 return true;

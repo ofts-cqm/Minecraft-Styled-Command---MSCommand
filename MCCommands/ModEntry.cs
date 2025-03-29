@@ -28,6 +28,7 @@ namespace MCCommands
             _ = new OP(helper);
             _ = new Deop(helper);
             _ = new RunMinecraft(helper);
+            _ = new Effect(helper);
 
             helper.Events.GameLoop.SaveLoaded += StringToken.Internal_Item_Target;
             helper.Events.GameLoop.SaveCreated += StringToken.Internal_Item_Target;

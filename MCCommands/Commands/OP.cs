@@ -18,7 +18,7 @@ namespace MCCommands.Commands
 
         public void ReadOPs(object? sender, EventArgs _)
         {
-            ModEntry.OPs.CopyFrom(Helper.Data.ReadSaveData<Dictionary<long, int>>("ops") ?? new());
+            ModEntry.OPs.CopyFrom(Helper.Data.ReadSaveData<Dictionary<long, int>>("ops") ?? new() { { Game1.player.UniqueMultiplayerID, 4 } });
         }
 
         public void SaveOPs(object? sender, EventArgs _)
