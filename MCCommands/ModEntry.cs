@@ -29,9 +29,11 @@ namespace MCCommands
             _ = new Deop(helper);
             _ = new RunMinecraft(helper);
             _ = new Effect(helper);
+            _ = new Enchant(helper);
 
             helper.Events.GameLoop.SaveLoaded += StringToken.Internal_Item_Target;
             helper.Events.GameLoop.SaveCreated += StringToken.Internal_Item_Target;
+            helper.Events.GameLoop.GameLaunched += StringToken.Internal_Enchantment_Target;
 
             ServerProperty? property = helper.Data.ReadJsonFile<ServerProperty>("server.property");
             if (property is null)

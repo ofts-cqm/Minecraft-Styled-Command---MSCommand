@@ -1,7 +1,10 @@
-﻿using StardewValley;
+﻿using StardewModdingAPI;
+using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Extensions;
 using StardewValley.GameData.Buffs;
 using StardewValley.ItemTypeDefinitions;
+using System.Reflection;
 
 namespace MCCommands.Tokens
 {
@@ -16,7 +19,7 @@ namespace MCCommands.Tokens
 
         public override IEnumerable<string>? GetAllValues() => AllValues.Invoke();
 
-        public override bool IsAllowedValue(string value) 
+        public override bool IsAllowedValue(string value)
         {
             var a = AllValues.Invoke();
             return AllValues.Invoke()?.Contains(value) ?? true;
@@ -108,7 +111,7 @@ namespace MCCommands.Tokens
                             }
                             return current == null ? null : new Character[] { current };
                         }
-                    case 'r': return new Farmer[] {new Random().ChooseFrom(new List<Farmer>(Game1.getOnlineFarmers()))};
+                    case 'r': return new Farmer[] { new Random().ChooseFrom(new List<Farmer>(Game1.getOnlineFarmers())) };
                     case 's': return new Farmer[] { Game1.player };
                     default: return null;
                 }
@@ -148,5 +151,19 @@ namespace MCCommands.Tokens
         }
 
         public static string[] Buff_Target() => ParsedBuffTarget;
+
+        private static Dictionary<string, Type> ParsedEnchantmentTarget = new();
+
+        public static void Internal_Enchantment_Target(object? sender, EventArgs _)
+        {
+            foreach(Type t in Assembly.LoadFrom(Path.Combine(Constants.GamePath, "Stardew Valley.dll")).GetTypes().Where(t => t.IsSubclassOf(typeof(BaseEnchantment))))
+            {
+                ParsedEnchantmentTarget.Add(t.Name, t);
+            }
+        }
+
+        public static string[] Enchantment_Target() => ParsedEnchantmentTarget.Keys.ToArray();
+
+        public static BaseEnchantment? GetEnchantment(string name) => ParsedEnchantmentTarget.TryGetValue(name, out Type? t) ? t.GetConstructor(Array.Empty<Type>())?.Invoke(null) as BaseEnchantment ?? null : null;
     }
 }
