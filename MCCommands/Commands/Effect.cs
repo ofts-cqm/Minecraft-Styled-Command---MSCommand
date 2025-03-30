@@ -47,7 +47,7 @@ namespace MCCommands.Commands
                 string? buff = null;
                 if (matchedToken.Count > 1)
                 {
-                    temp = EntityMatchToken.GetPlayers((string)matchedToken[1], context.Player.currentLocation, context.Player);
+                    temp = EntityMatchToken.GetPlayers((string)matchedToken[1], context);
                     if (temp == null)
                     {
                         message = "target not found";
@@ -82,7 +82,7 @@ namespace MCCommands.Commands
                 return true;
             }
 
-            IEnumerable<Farmer>? fmrs = EntityMatchToken.GetPlayers((string)matchedToken[1], context.Player.currentLocation, context.Player);
+            IEnumerable<Farmer>? fmrs = EntityMatchToken.GetPlayers((string)matchedToken[1], context);
             if (fmrs == null)
             {
                 message = "target not found";

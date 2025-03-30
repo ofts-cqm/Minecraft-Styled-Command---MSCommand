@@ -90,7 +90,12 @@ namespace MCCommands.Commands
             }
             else
             {
-                farmers = new Farmer[] { context.Player };
+                if (context.Player is not Farmer farmer)
+                {
+                    message = "Executor must be a player";
+                    return false;
+                }
+                farmers = new Farmer[] { farmer };
                 target = null;
                 limit = 1145141919;
             }

@@ -1,4 +1,5 @@
-﻿using StardewValley;
+﻿using MCCommands.Commands;
+using StardewValley;
 using StardewValley.Extensions;
 
 namespace MCCommands.Tokens
@@ -35,7 +36,7 @@ namespace MCCommands.Tokens
             return GetAllValues()?.Contains(value) ?? true;
         }
 
-        public static IEnumerable<Character>? GetEntities(string pattern, GameLocation location, Farmer player)
+        public static IEnumerable<Character>? GetEntities(string pattern, CommandContext context)
         {
             if (pattern.StartsWith('@') && pattern.Length == 2)
             {
@@ -46,21 +47,21 @@ namespace MCCommands.Tokens
                     case 'e':
                         {
                             HashSet<Character> result = new(Game1.getOnlineFarmers());
-                            result.AddRange(location.characters);
+                            result.AddRange(context.Dim.characters);
                             return result;
                         }
                     case 'n':
                         {
                             HashSet<Character> entities = new(Game1.getOnlineFarmers());
-                            entities.AddRange(location.characters);
+                            entities.AddRange(context.Dim.characters);
                             float curPos = 1145141919810;
                             Character? current = null;
                             foreach (Character c in entities)
                             {
-                                if (c != player && c.currentLocation == player.currentLocation && (c.Position - player.Position).Length() < curPos)
+                                if (c != context.Player && c.currentLocation == context.Dim && (c.Position - context.Pos).Length() < curPos)
                                 {
                                     current = c;
-                                    curPos = (c.Position - player.Position).Length();
+                                    curPos = (c.Position - context.Pos).Length();
                                 }
                             }
                             return current == null ? null : new Character[] { current };
@@ -69,18 +70,18 @@ namespace MCCommands.Tokens
                         {
                             float curPos = 1145141919810;
                             Character? current = null;
-                            foreach (Character c in location.characters)//getOnlineFarmers())
+                            foreach (Character c in context.Dim.characters)//getOnlineFarmers())
                             {
-                                if (c != player && c.currentLocation == player.currentLocation && (c.Position - player.Position).Length() < curPos)
+                                if (c != context.Player && c.currentLocation == context.Player.currentLocation && (c.Position - context.Pos).Length() < curPos)
                                 {
                                     current = c;
-                                    curPos = (c.Position - player.Position).Length();
+                                    curPos = (c.Position - context.Pos).Length();
                                 }
                             }
                             return current == null ? null : new Character[] { current };
                         }
                     case 'r': return new Farmer[] { new Random().ChooseFrom(new List<Farmer>(Game1.getOnlineFarmers())) };
-                    case 's': return new Farmer[] { player };
+                    case 's': return new Character[] { context.Player };
                     default: return null;
                 }
             }
@@ -89,9 +90,9 @@ namespace MCCommands.Tokens
             return null;
         }
 
-        public static IEnumerable<Farmer>? GetPlayers(string pattern, GameLocation location, Farmer player)
+        public static IEnumerable<Farmer>? GetPlayers(string pattern, CommandContext context)
         {
-            IEnumerable<Character>? temp = GetEntities(pattern, location, player);
+            IEnumerable<Character>? temp = GetEntities(pattern, context);
             if (temp is null) return null;
             List<Farmer> farmers = new List<Farmer>();
             foreach (Character c in temp) if (c is Farmer f) farmers.Add(f);

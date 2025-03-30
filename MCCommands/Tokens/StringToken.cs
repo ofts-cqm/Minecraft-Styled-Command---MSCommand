@@ -170,24 +170,7 @@ namespace MCCommands.Tokens
 
         public static BaseEnchantment? GetEnchantment(string name) => ParsedEnchantmentTarget.TryGetValue(name, out Type? t) ? t.GetConstructor(Array.Empty<Type>())?.Invoke(null) as BaseEnchantment ?? null : null;
 
-        public static List<string> Swiss = new();
-
-        public static string[] Swiss_Target()
-        {
-            if (Swiss.Any()) return Swiss.ToArray();
-            string[] options = new string[] { "x", "y", "z", "" };
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    for (int k = 0; k < 4; k++)
-                    {
-                        Swiss.Add(options[i] + options[j] + options[k]);
-                    }
-                }
-            }
-            return Swiss.ToArray();
-        }
+        public static string[] Swiss_Target() => new string[]{ "x" , "y", "xy", "yx"};
 
         public static string[] Dimention_Target() => ModEntry.ModHelper.Multiplayer.GetActiveLocations().Select(l => l.Name).ToArray();
     }

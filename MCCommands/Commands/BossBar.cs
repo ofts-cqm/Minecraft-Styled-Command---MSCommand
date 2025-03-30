@@ -68,7 +68,7 @@ namespace MCCommands.Commands
                 .AddField(players, "players");
         }
 
-        public bool IsVisibleToPlayer(Farmer player) => EntityMatchToken.GetPlayers(Players, player.currentLocation, player)?.Contains(player) ?? false;
+        public bool IsVisibleToPlayer(Farmer player) => EntityMatchToken.GetPlayers(Players, new CommandContext(null, Game1.player, Game1.player.Position, Game1.currentLocation))?.Contains(player) ?? false;
     }
 
     internal class BossBar : ICommand
@@ -293,7 +293,7 @@ namespace MCCommands.Commands
                     }
                 case "players":
                     {
-                        IEnumerable<Farmer>? allPlayers = EntityMatchToken.GetPlayers(bar.Players, context.Dim, context.Player);
+                        IEnumerable<Farmer>? allPlayers = EntityMatchToken.GetPlayers(bar.Players, context);
 
                         if (allPlayers is null)
                         {
@@ -459,7 +459,7 @@ namespace MCCommands.Commands
                         string players = matchedToken[3] as string ?? "";
                         if (players == "@e")
                         {
-                            foreach (Character c in EntityMatchToken.GetEntities(players, context.Dim, context.Player) ?? Array.Empty<Character>())
+                            foreach (Character c in EntityMatchToken.GetEntities(players, context) ?? Array.Empty<Character>())
                             {
                                 if (c is not Farmer)
                                 {
@@ -469,7 +469,7 @@ namespace MCCommands.Commands
                             }
                         }
                         bar.Players = players;
-                        IEnumerable<Farmer>? allPlayers = EntityMatchToken.GetPlayers(players, context.Dim, context.Player);
+                        IEnumerable<Farmer>? allPlayers = EntityMatchToken.GetPlayers(players, context);
 
                         if (allPlayers is null)
                         {

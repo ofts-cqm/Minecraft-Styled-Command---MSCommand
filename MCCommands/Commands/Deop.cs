@@ -13,7 +13,7 @@ namespace MCCommands.Commands
 
         public override bool Execute(List<object> matchedToken, CommandContext context, out string? message)
         {
-            IEnumerable<Farmer>? targets = EntityMatchToken.GetPlayers(matchedToken[0] as string, context.Dim, context.Player);
+            IEnumerable<Farmer>? targets = EntityMatchToken.GetPlayers(matchedToken[0] as string, context);
             if (targets is null)
             {
                 foreach (Farmer target in Game1.getOnlineFarmers())

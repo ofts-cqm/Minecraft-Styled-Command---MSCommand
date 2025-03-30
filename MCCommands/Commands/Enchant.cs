@@ -19,7 +19,7 @@ namespace MCCommands.Commands
 
         public override bool Execute(List<object> matchedToken, CommandContext context, out string? message)
         {
-            IEnumerable<Farmer>? targets = EntityMatchToken.GetPlayers((string)matchedToken[0], context.Dim, context.Player);
+            IEnumerable<Farmer>? targets = EntityMatchToken.GetPlayers((string)matchedToken[0], context);
             BaseEnchantment? enchantment = StringToken.GetEnchantment((string)matchedToken[1]);
             int level = matchedToken.Count > 2 ? (int)matchedToken[2] : 1;
 

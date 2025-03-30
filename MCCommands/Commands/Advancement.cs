@@ -32,7 +32,7 @@ namespace MCCommands.Commands
         public override bool Execute(List<object> matchedToken, CommandContext context, out string? message)
         {
             bool grant = matchedToken[0] as string == "grant";
-            IEnumerable<Farmer>? farmers = EntityMatchToken.GetPlayers((string)matchedToken[1], context.Dim, context.Player);
+            IEnumerable<Farmer>? farmers = EntityMatchToken.GetPlayers((string)matchedToken[1], context);
             if (farmers == null || !farmers.Any())
             {
                 message = "Player not found";
