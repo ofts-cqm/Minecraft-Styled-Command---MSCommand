@@ -168,10 +168,20 @@ namespace MCCommands.Tokens
         public static string[] Enchantment_Target() => ParsedEnchantmentTarget.Keys.ToArray();
         public static string[] Character_Target() => ParsedCharacterTarget.Keys.ToArray();
 
+        public static Type? GetCharacter(string name) => ParsedCharacterTarget.TryGetValue(name, out Type? t) ? t : null;
+
         public static BaseEnchantment? GetEnchantment(string name) => ParsedEnchantmentTarget.TryGetValue(name, out Type? t) ? t.GetConstructor(Array.Empty<Type>())?.Invoke(null) as BaseEnchantment ?? null : null;
 
         public static string[] Swiss_Target() => new string[]{ "x" , "y", "xy", "yx"};
 
-        public static string[] Dimention_Target() => ModEntry.ModHelper.Multiplayer.GetActiveLocations().Select(l => l.Name).ToArray();
+        public static string[] Location_Buffed = Array.Empty<string>();
+        public static void Internal_Location_Buffed(object? sender, EventArgs _)
+        {
+            List<string> temp = new();
+            Utility.ForEachLocation(loc => { temp.Add(loc.Name); return true; });
+            Location_Buffed = temp.ToArray();
+        }
+
+        public static string[] Dimention_Target() => Location_Buffed;
     }
 }

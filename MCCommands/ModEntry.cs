@@ -30,13 +30,16 @@ namespace MCCommands
             _ = new Clone(helper);
             _ = new OP(helper);
             _ = new Deop(helper);
-            _ = new RunMinecraft(helper);
+            //_ = new RunMinecraft(helper);
             _ = new Effect(helper);
             _ = new Enchant(helper);
+            _ = new ExecuteCommand(helper);
 
             helper.Events.GameLoop.SaveLoaded += StringToken.Internal_Item_Target;
             helper.Events.GameLoop.SaveCreated += StringToken.Internal_Item_Target;
             helper.Events.GameLoop.GameLaunched += StringToken.Internal_Enchantment_Target;
+            helper.Events.GameLoop.SaveLoaded += StringToken.Internal_Location_Buffed;
+            helper.Events.GameLoop.SaveCreated += StringToken.Internal_Location_Buffed;
 
             ServerProperty? property = helper.Data.ReadJsonFile<ServerProperty>("server.property");
             if (property is null)

@@ -19,26 +19,27 @@ namespace MCCommands.Commands
             commandToken.Values.Add("anchored", new StringToken(() => new string[] {"eyes", "feet"}, "anchors", "incorrect anchors") { Next = commandToken });
             commandToken.Values.Add("as", new EntityMatchToken { Next = commandToken });
             commandToken.Values.Add("at", new EntityMatchToken { Next = commandToken });
-            commandToken.Values.Add("facing", new CoordinateTokenAllowEntity("entity", allowDecimal: false, onlyOne: true) { Next = new StringToken(() => new string[] {"eyes", "feet"}, "anchors", "incorrect anchors") { Next = commandToken } });
+            commandToken.Values.Add("facing", new CoordinateTokenAllowEntity("entity") { Next = commandToken });
             commandToken.Values.Add("in", new StringToken(StringToken.Dimention_Target, "dimensions", "incorrect dimensions") { Next = commandToken });
             commandToken.Values.Add("positioned", new CoordinateTokenAllowEntity("as") { Next = commandToken });
             commandToken.Values.Add("rotated", new CoordinateTokenAllowEntity("as", onlyOne: true) { Next = commandToken });
             commandToken.Values.Add("summon", new StringToken(StringToken.Character_Target, "entity", "incorrect monster type") { Next = commandToken });
             SubCommandToken ifUnlessToken = new(new()
             {
-                { "block", new CoordinateToken("block_pos", false) { Next = new StringToken(StringToken.Item_Target, "block", "block not found") { Next = commandToken } } },
+                { "block", new CoordinateToken("block_pos", false).SetNext(new StringToken(StringToken.Item_Target, "block", "block not found") { Next = commandToken } ) },
                 { "dimension", new StringToken(StringToken.Dimention_Target, "dimensions", "incorrect dimensions") { Next = commandToken } },
-                { "entity", new EntityMatchToken { Next = commandToken } },
+                { "entity", new EntityMatchToken { Next = commandToken, StrictValue = false } },
                 { "items", new SubCommandToken(new()
                 {
-                    { "block", new CoordinateToken("sourcePos", false) {Next = new NumberToken("slot") { Next = commandToken } } },
-                    { "entity", new CoordinateToken("source", false) {Next = new NumberToken("slot") { Next = commandToken } } }
+                    { "block", new CoordinateToken("sourcePos", false).SetNext(new NumberToken("slot") { Next = commandToken }) },
+                    { "entity", new EntityMatchToken("source") {Next = new NumberToken("slot") { Next = commandToken } } }
                 }) },
-                { "loaded", new CoordinateToken("pos", false) { Next = commandToken } }
+                { "loaded", new CoordinateToken("pos", false).SetNext(commandToken)}
             });
             commandToken.Values.Add("if", ifUnlessToken);
             commandToken.Values.Add("unless", ifUnlessToken);
             commandToken.Values.Add("run", new CommandToken());
+            commandToken.Values.Add("debug", null);
         }
 
         public override bool Execute(List<object> matchedToken, CommandContext context, out string? message)
@@ -49,15 +50,15 @@ namespace MCCommands.Commands
                 case "align":
                     {
                         string op = (string)matchedToken[1];
-                        if (op.Contains('x')) context.Pos.X = (int)context.Pos.X;
-                        if (op.Contains('y')) context.Pos.Y = (int)context.Pos.Y;
+                        if (op.Contains('x')) context.Pos.X = (int)context.Pos.X / Game1.tileSize * Game1.tileSize;
+                        if (op.Contains('y')) context.Pos.Y = (int)context.Pos.Y / Game1.tileSize * Game1.tileSize;
                         return Execute(matchedToken.GetRange(2, matchedToken.Count - 2), context, out message);
                     }
                 case "anchored":
                     {
                         string op = (string)matchedToken[1];
-                        if (op == "eyes") context.Pos.Y = context.PositionedEntity.Position.Y - 1;
-                        else context.Pos.Y = context.PositionedEntity.Position.Y;
+                        if (op == "eyes") context.Pos.Y = context.PositionedEntity.Position.Y - 64;
+                        else context.Pos.Y = context.PositionedEntity.StandingPixel.Y;
                         return Execute(matchedToken.GetRange(2, matchedToken.Count - 2), context, out message);
                     }
                 case "as":
@@ -88,10 +89,10 @@ namespace MCCommands.Commands
 
                 case "at":
                     {
-                        IEnumerable<Farmer>? targets = EntityMatchToken.GetPlayers((string)matchedToken[1], context);
+                        IEnumerable<Character>? targets = EntityMatchToken.GetEntities((string)matchedToken[1], context);
                         if (targets == null)
                         {
-                            message = "No players found";
+                            message = "No entity found";
                             return false;
                         }
 
@@ -99,7 +100,7 @@ namespace MCCommands.Commands
                         {
                             StringBuilder sb = new();
                             bool succeeded = false;
-                            foreach (Farmer target in targets)
+                            foreach (Character target in targets)
                             {
                                 succeeded |= Execute(matchedToken.GetRange(2, matchedToken.Count - 2), new CommandContext(context) { Pos = target.Position, PositionedEntity = target, Dim = target.currentLocation, Facing = target.FacingDirection}, out message);
                                 sb.AppendLine(message);
@@ -119,14 +120,9 @@ namespace MCCommands.Commands
                     {
                         if (matchedToken[1] is Vector2 block)
                         {
-                            Vector2 dif2 = block - context.Pos;
-                            double angle2 = Math.Atan2(dif2.X, dif2.Y);
-                            if (angle2 < 0) angle2 += Math.PI * 2;
-
-                            if (angle2 < Math.PI / 4 || angle2 > Math.PI * 7 / 4) context.Facing = 1;
-                            else if (angle2 < Math.PI * 3 / 4) context.Facing = 0;
-                            else if (angle2 < Math.PI * 5 / 4) context.Facing = 3;
-                            else context.Facing = 2;
+                            Vector2 dif2 = block * Game1.tileSize - context.Pos;
+                            if (Math.Abs(dif2.X) > Math.Abs(dif2.Y)) context.Facing = dif2.X > 0 ? 1 : 3;
+                            else context.Facing = dif2.Y > 0 ? 2 : 0;
                             return Execute(matchedToken.GetRange(2, matchedToken.Count - 2), context, out message);
                         }
 
@@ -144,13 +140,8 @@ namespace MCCommands.Commands
                             foreach (Character target in targets)
                             {
                                 Vector2 dif1 = targets.First().Position - context.Pos;
-                                double angle1 = Math.Atan2(dif1.X, dif1.Y);
-                                if (angle1 < 0) angle1 += Math.PI * 2;
-
-                                if (angle1 < Math.PI / 4 || angle1 > Math.PI * 7 / 4) context.Facing = 1;
-                                else if (angle1 < Math.PI * 3 / 4) context.Facing = 0;
-                                else if (angle1 < Math.PI * 5 / 4) context.Facing = 3;
-                                else context.Facing = 2;
+                                if (Math.Abs(dif1.X) > Math.Abs(dif1.Y)) context.Facing = dif1.X > 0 ? 1 : 3;
+                                else context.Facing = dif1.Y > 0 ? 2 : 0;
                                 succeeded |= Execute(matchedToken.GetRange(2, matchedToken.Count - 2), new CommandContext(context), out message);
                                 sb.AppendLine(message);
                             }
@@ -159,13 +150,8 @@ namespace MCCommands.Commands
                         }
 
                         Vector2 dif = targets.First().Position - context.Pos;
-                        double angle = Math.Atan2(dif.X, dif.Y);
-                        if (angle < 0) angle += Math.PI * 2;
-
-                        if (angle < Math.PI / 4 || angle > Math.PI * 7 / 4) context.Facing = 1;
-                        else if (angle < Math.PI * 3 / 4) context.Facing = 0;
-                        else if (angle < Math.PI * 5 / 4) context.Facing = 3;
-                        else context.Facing = 2;
+                        if (Math.Abs(dif.X) > Math.Abs(dif.Y)) context.Facing = dif.X > 0 ? 1 : 3;
+                        else context.Facing = dif.Y > 0 ? 2 : 0;
                         return Execute(matchedToken.GetRange(2, matchedToken.Count - 2), context, out message);
                     }
 
@@ -187,7 +173,7 @@ namespace MCCommands.Commands
                     {
                         if (matchedToken[1] is Vector2 pos)
                         {
-                            context.Pos = pos;
+                            context.Pos = pos * Game1.tileSize;
                             return Execute(matchedToken.GetRange(2, matchedToken.Count - 2), context, out message);
                         }
 
@@ -218,14 +204,14 @@ namespace MCCommands.Commands
 
                 case "rotated":
                     {
-                        if (matchedToken[1] is int facing)
+                        if (matchedToken[1] is float facing)
                         {
                             if (facing > 4)
                             {
                                 message = "Invalid facing direction";
                                 return false;
                             }
-                            context.Facing = facing;
+                            context.Facing = (int)facing;
                             return Execute(matchedToken.GetRange(2, matchedToken.Count - 2), context, out message);
                         }
 
@@ -254,8 +240,7 @@ namespace MCCommands.Commands
                     }
                 case "summon":
                     {
-                        string fullTypeName = "StardewValley.Monsters." + matchedToken[1];
-                        Type? monsterType = Type.GetType(fullTypeName);
+                        Type? monsterType = StringToken.GetCharacter((string)matchedToken[1]);
                         if (monsterType is null)
                         {
                             message = matchedToken[1] + " does not exist";
@@ -274,18 +259,19 @@ namespace MCCommands.Commands
                         {
                             case "block":
                                 {
-                                    Vector2 block = (Vector2)matchedToken[2];
-                                    string name = (string)matchedToken[3];
-                                    if ((context.Dim.Objects.TryGetValue(block, out Object obj) && (obj.Name == name || obj.DisplayName == name || obj.QualifiedItemId == name || obj.ItemId == name)) ^ ((string)matchedToken[1] == "unless"))
+                                    int x = (int)matchedToken[2], y = (int)matchedToken[3];
+                                    Vector2 block = new Vector2(x, y);
+                                    string name = (string)matchedToken[4];
+                                    if ((context.Dim.Objects.TryGetValue(block, out Object obj) && (obj.Name == name || obj.DisplayName == name || obj.QualifiedItemId == name || obj.ItemId == name)) ^ ((string)matchedToken[0] == "unless"))
                                     {
-                                        return Execute(matchedToken.GetRange(3, matchedToken.Count - 3), context, out message);
+                                        return Execute(matchedToken.GetRange(5, matchedToken.Count - 5), context, out message);
                                     }
                                     return true;
                                 }
                             case "dimension":
                                 {
                                     string dim = (string)matchedToken[2];
-                                    if ((context.Dim.Name == dim || context.Dim.DisplayName == dim) ^ ((string)matchedToken[1] == "unless"))
+                                    if ((context.Dim.Name == dim || context.Dim.DisplayName == dim) ^ ((string)matchedToken[0] == "unless"))
                                     {
                                         return Execute(matchedToken.GetRange(3, matchedToken.Count - 3), context, out message);
                                     }
@@ -293,7 +279,7 @@ namespace MCCommands.Commands
                                 }
                             case "entity":
                                 {
-                                    if ((EntityMatchToken.GetEntities((string)matchedToken[2], context) is not null) ^ ((string)matchedToken[1] == "unless"))
+                                    if ((EntityMatchToken.GetEntities((string)matchedToken[2], context) is not null) ^ ((string)matchedToken[0] == "unless"))
                                     {
                                         return Execute(matchedToken.GetRange(3, matchedToken.Count - 3), context, out message);
                                     }
@@ -305,9 +291,10 @@ namespace MCCommands.Commands
                                     {
                                         case "block":
                                             {
-                                                Vector2 sourcePos = (Vector2)matchedToken[3];
-                                                int slot = (int)matchedToken[4];
-                                                string name = (string)matchedToken[5];
+                                                int x = (int)matchedToken[2], y = (int)matchedToken[3];
+                                                Vector2 sourcePos = new Vector2(x, y);
+                                                int slot = (int)matchedToken[5];
+                                                string name = (string)matchedToken[6];
                                                 if (context.Dim.Objects.TryGetValue(sourcePos, out Object obj) && obj is Chest chest)
                                                 {
                                                     if (chest.Items.Count < slot)
@@ -316,9 +303,9 @@ namespace MCCommands.Commands
                                                         return false;
                                                     }
                                                     Item? item = chest.Items[slot];
-                                                    if ((item is not null && (item.DisplayName == name || item.Name == name || item.ItemId == name || item.QualifiedItemId == name)) ^ ((string)matchedToken[1] == "unless"))
+                                                    if ((item is not null && (item.DisplayName == name || item.Name == name || item.ItemId == name || item.QualifiedItemId == name)) ^ ((string)matchedToken[0] == "unless"))
                                                     {
-                                                        return Execute(matchedToken.GetRange(4, matchedToken.Count - 4), context, out message);
+                                                        return Execute(matchedToken.GetRange(7, matchedToken.Count - 7), context, out message);
                                                     }
                                                 }
                                                 return true;
@@ -367,7 +354,7 @@ namespace MCCommands.Commands
                                                         message = "invalid slot";
                                                         return false;
                                                     }
-                                                    if ((item is not null && (item.DisplayName == name || item.Name == name || item.ItemId == name || item.QualifiedItemId == name)) ^ ((string)matchedToken[1] == "unless"))
+                                                    if ((item is not null && (item.DisplayName == name || item.Name == name || item.ItemId == name || item.QualifiedItemId == name)) ^ ((string)matchedToken[0] == "unless"))
                                                     {
                                                         return Execute(matchedToken.GetRange(4, matchedToken.Count - 4), context, out message);
                                                     }
@@ -379,11 +366,12 @@ namespace MCCommands.Commands
                                 }
                             case "loaded":
                                 {
-                                    Vector2 pos = (Vector2)matchedToken[2];
+                                    int x = (int)matchedToken[2], y = (int)matchedToken[3];
+                                    Vector2 pos = new Vector2(x, y);
                                     Size mapSize = context.Dim.Map.Layers[0].LayerSize;
-                                    if ((pos.X >= mapSize.Width || pos.Y >= mapSize.Height) ^ ((string)matchedToken[1] == "unless"))
+                                    if (!(pos.X >= mapSize.Width || pos.Y >= mapSize.Height) ^ ((string)matchedToken[0] == "unless"))
                                     {
-                                        return Execute(matchedToken.GetRange(3, matchedToken.Count - 3), context, out message);
+                                        return Execute(matchedToken.GetRange(4, matchedToken.Count - 4), context, out message);
                                     }
                                     return true;
                                 }
@@ -395,9 +383,20 @@ namespace MCCommands.Commands
                         if (matchedToken[1] is ICommand command)
                         {
                             matchedToken.RemoveAt(0);
+                            matchedToken.RemoveAt(0);
                             return command.Execute(matchedToken, context, out message);
                         }
                         return false;
+                    }
+                case "debug":
+                    {
+                        StringBuilder sb = new StringBuilder("source: ").AppendLine(context.Player.displayName);
+                        sb.AppendLine("position: " + context.Pos);
+                        sb.AppendLine("facing: " + context.Facing);
+                        sb.AppendLine("dimension: " + context.Dim.Name);
+                        sb.AppendLine("positioned entity: " + context.PositionedEntity?.displayName);
+                        message = sb.ToString();
+                        return true;
                     }
             }
             return false;

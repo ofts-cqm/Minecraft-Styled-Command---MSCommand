@@ -36,6 +36,12 @@ namespace MCCommands.Tokens
             }
         }
 
+        public CoordinateToken SetNext(IToken next)
+        {
+            ((LinearToken)Next).NextToken(next);
+            return this;
+        }
+
         public override bool MatchToken(List<string> args, out object? readValue, out string? error)
         {
             if (!base.MatchToken(args, out readValue, out error)) return false;
@@ -45,8 +51,14 @@ namespace MCCommands.Tokens
             {
                 if (args[0][0] == '~' && float.TryParse(args[0].AsSpan(1), out float offSet))
                 {
-                    if (isX) num = CommandContext.CurrentCommandContext.Pos.X + offSet;
-                    else num = CommandContext.CurrentCommandContext.Pos.Y + offSet;
+                    if (isX) num = CommandContext.CurrentCommandContext.Pos.X / Game1.tileSize + offSet;
+                    else num = CommandContext.CurrentCommandContext.Pos.Y / Game1.tileSize + offSet;
+                    goto Next;
+                }
+                else if (args[0] == "~")
+                {
+                    if (isX) num = CommandContext.CurrentCommandContext.Pos.X / Game1.tileSize;
+                    else num = CommandContext.CurrentCommandContext.Pos.Y / Game1.tileSize;
                     goto Next;
                 }
 

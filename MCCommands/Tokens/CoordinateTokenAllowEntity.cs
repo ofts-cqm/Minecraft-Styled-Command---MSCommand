@@ -1,6 +1,6 @@
 ﻿using MCCommands.Commands;
+using Microsoft.Xna.Framework;
 using StardewValley;
-using System.Numerics;
 
 namespace MCCommands.Tokens
 {
@@ -51,7 +51,12 @@ namespace MCCommands.Tokens
             {
                 if (args[0][0] == '~' && float.TryParse(args[0].AsSpan(1), out float offSet))
                 {
-                    pos.X = CommandContext.CurrentCommandContext.Pos.X + offSet;
+                    pos.X = CommandContext.CurrentCommandContext.Pos.X / Game1.tileSize + offSet;
+                    goto Next;
+                }
+                else if (args[0] == "~")
+                {
+                    pos.X = CommandContext.CurrentCommandContext.Pos.X / Game1.tileSize;
                     goto Next;
                 }
 
@@ -62,11 +67,16 @@ namespace MCCommands.Tokens
         Next:
             if (onlyOne) goto Finish;
 
-            if (!float.TryParse(args[0], out pos.Y))
+            if (!float.TryParse(args[1], out pos.Y))
             {
                 if (args[1][0] == '~' && float.TryParse(args[1].AsSpan(1), out float offSet))
                 {
-                    pos.Y = CommandContext.CurrentCommandContext.Pos.Y + offSet;
+                    pos.Y = CommandContext.CurrentCommandContext.Pos.Y / Game1.tileSize + offSet;
+                    goto Finish;
+                }
+                else if (args[1] == "~")
+                {
+                    pos.Y = CommandContext.CurrentCommandContext.Pos.Y / Game1.tileSize;
                     goto Finish;
                 }
 
